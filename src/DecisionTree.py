@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
@@ -8,7 +10,6 @@ from sklearn.metrics import classification_report
 
 
 def loadData():
-    print("her")
     data = pd.read_fwf('data_banknote_authentication.txt')
 
     # Printing the dataswet shape
@@ -29,19 +30,24 @@ def learn(X, y, impurity_measure='gini'):
 
 
 def predict(x, tree):
+    print()
 
-
-def dataSplit(data, seed=None):
+def dataSplit(data, trainPercentage, seed=None):
     np.random.seed(seed)
     np.random.shuffle(data)
     lengthData = len(data)
-    trainPercentage = 0.7
     trainRows = int(trainPercentage * lengthData)
     X_train = np.array(data[:trainRows][:, :-1])
     X_val = np.array(data[trainRows:][:, :-1])
     y_train = np.array(data[:trainRows][:, -1])
     y_val = np.array(data[trainRows:][:, -1])
     return X_train, X_val, y_train, y_val
+
+
+# Calculating Entropy
+def calcEntropy(col):
+    entropy = - sum([ p * math.log(p) / math.log(2.0) for p in col])
+    return entropy
 
 
 
