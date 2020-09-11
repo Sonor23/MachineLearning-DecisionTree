@@ -46,6 +46,7 @@ def dataSplit(data, trainPercentage, seed=None):
 
 # Calculating Entropy
 def calcEntropy(col):
+    #Calc
     entropy = - sum([ p * math.log(p) / math.log(2.0) for p in col])
     return entropy
 
