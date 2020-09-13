@@ -44,18 +44,6 @@ def dataSplit(data, trainPercentage, seed=None):
     return X_train, X_val, y_train, y_val
 
 
-# Calculating Entropy => H(X)
-def calcEntropy(col):
-    entropy = - sum([p * math.log(p) / math.log(2.0) for p in col])
-    return entropy
-
-# Calculating H(Y|X)
-def calcEntropy(col, value):
-    pass
-
-def informationGain():
-    pass
-
 
 def buildTree():
     pass
