@@ -8,10 +8,9 @@ class Node:
         self.impurity_measure = impurity_measure
         self.children = []
         self.parent = parent
-        self.treshold = treshold  #Value for split
+        self.treshold = treshold  # Value for split
         self.left = None
         self.right = None
-
 
     # Adding children to tree
     def addChild(self, node):
@@ -36,10 +35,3 @@ class Node:
 
         else:
             print("Impurity_measure -> Not walid")
-
-
-
-
-
-
-

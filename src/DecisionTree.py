@@ -3,13 +3,14 @@ import math
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
-#from sklearn.cross_validation import train_test_split
-#from sklearn.tree import DecisionTreeClassifier
+# from sklearn.cross_validation import train_test_split
+# from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 
 
 def loadData():
+    print("her")
     data = pd.read_fwf('data_banknote_authentication.txt')
 
     # Printing the dataswet shape
@@ -26,16 +27,18 @@ def learn(X, y, impurity_measure='entropy'):
 
 
 def learn(X, y, impurity_measure='gini'):
-    print()
+    pass
 
 
 def predict(x, tree):
-    print()
+    pass
 
-def dataSplit(data, trainPercentage, seed=None):
+
+def dataSplit(data, seed=None):
     np.random.seed(seed)
     np.random.shuffle(data)
     lengthData = len(data)
+    trainPercentage = 0.7
     trainRows = int(trainPercentage * lengthData)
     X_train = np.array(data[:trainRows][:, :-1])
     X_val = np.array(data[trainRows:][:, :-1])
@@ -44,12 +47,8 @@ def dataSplit(data, trainPercentage, seed=None):
     return X_train, X_val, y_train, y_val
 
 
-
 def buildTree():
     pass
-
-
-
 
 
 if __name__ == "__main__":
