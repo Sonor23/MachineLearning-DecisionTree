@@ -1,16 +1,15 @@
 import math
-
+from .Calculations import *
 import numpy as np
 import pandas as pd
 from sklearn.metrics import confusion_matrix
-# from sklearn.cross_validation import train_test_split
-# from sklearn.tree import DecisionTreeClassifier
+#from sklearn.cross_validation import train_test_split
+#from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 
 
 def loadData():
-    print("her")
     data = pd.read_fwf('data_banknote_authentication.txt')
 
     # Printing the dataswet shape
@@ -27,28 +26,35 @@ def learn(X, y, impurity_measure='entropy'):
 
 
 def learn(X, y, impurity_measure='gini'):
-    pass
+    print()
 
 
 def predict(x, tree):
-    pass
+    print()
 
-
-def dataSplit(data, seed=None):
+def dataSplit(data, trainPercentage, seed=None):
     np.random.seed(seed)
     np.random.shuffle(data)
     lengthData = len(data)
-    trainPercentage = 0.7
     trainRows = int(trainPercentage * lengthData)
     X_train = np.array(data[:trainRows][:, :-1])
     X_val = np.array(data[trainRows:][:, :-1])
-    y_train = np.array(data[:trainRows][:, -1])
-    y_val = np.array(data[trainRows:][:, -1])
-    return X_train, X_val, y_train, y_val
+    Y_train = np.array(data[:trainRows][:, -1])
+    Y_val = np.array(data[trainRows:][:, -1])
+    return X_train, X_val, Y_train, Y_val
 
 
-def buildTree():
-    pass
+def chooseImpurity(col, impurity_measure):
+    if impurity_measure == 'entropy':
+        return calcEntropy(col)
+    elif impurity_measure == 'gini':
+        return gini(col)
+
+    else:
+        print("Impurity_measure -> Not valid")
+
+
+
 
 
 if __name__ == "__main__":
