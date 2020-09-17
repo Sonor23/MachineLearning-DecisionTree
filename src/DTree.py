@@ -1,6 +1,3 @@
-import math
-
-import numpy as np
 import pandas as pd
 from math import log2
 
@@ -16,7 +13,6 @@ class Node:
         self.label = label
         self.threshold = threshold
         self.leaf = False
-        self.children = None
 
 
 def main():
@@ -51,8 +47,8 @@ def main():
     b = [-2.7419, 11.4038, 2.5394, -5.5793]
     c = [3.3669, -5.1856, 3.6935, -1.1427]
     d = [4.5597, -2.4211, 2.6413, 1.6168]
-    e =[5.1129, -0.49871, 0.62863, 1.1189]
-    abc = [a,b,c,d,e]
+    e = [5.1129, -0.49871, 0.62863, 1.1189]
+    abc = [a, b, c, d, e]
     for row in abc:
         predicted_label = predict(row, tree)
         print(predicted_label)
@@ -94,29 +90,6 @@ def create_training_and_test_df(data, seed, trainPrecentage=0.7):
     # Y_train = X_train.pop('label')
     # Y_test = X_test.pop('label')
     return X_train, X_test, Y_train, Y_test
-
-
-def div(X, y, column_name):
-    # TODO another way to get a column
-    #  my_column = X[[columnName]]
-
-    column = X.get(column_name)
-    column_mean = column.mean(axis=0)  # threshold for column
-
-    above_real = X.loc[(X[column_name] > column_mean) & (X['label'] == 1)]
-    above_fake = X.loc[(X[column_name] > column_mean) & (X['label'] == 0)]
-    below_real = X.loc[(X[column_name] <= column_mean) & (X['label'] == 1)]
-    below_fake = X.loc[(X[column_name] <= column_mean) & (X['label'] == 0)]
-
-    # find Entropy for labels
-    len_label = len(X.label)
-    count_distribution_of_labels = X.label.value_counts()
-
-    probabilities = [count / len_label for count in count_distribution_of_labels]
-    column_entropy = 0
-    for probability in probabilities:
-        column_entropy = column_entropy + probability * log2(probability)
-    print(-column_entropy)
 
 
 def calc_entropy(data_frame):
@@ -168,10 +141,8 @@ def find_best_column_to_split_gini(data_frame):
 
         column_ginies[column_name] = gini_for_column
         column_means[column_name] = column_mean
-        #print(column_name + " " + str(gini_for_column))
 
     column_name_min_value = min(column_ginies, key=column_ginies.get)
-
     return column_name_min_value, column_means[column_name_min_value]
 
 
@@ -202,8 +173,6 @@ def find_best_column_to_split_entropy(data_frame):
         column_entropies[column_name] = entropy_for_column
         column_means[column_name] = column_mean
 
-        #print(column_name + " " + str(entropy_for_column))
-
     column_name_min_value = min(column_entropies, key=column_entropies.get)
 
     return column_name_min_value, column_means[column_name_min_value]
@@ -219,7 +188,6 @@ def check_all_same_label(data_frame):
 
 def check_all_same_values(data_frame):
     column_names = list(data_frame.columns.values)
-
     if "label" in column_names:
         column_names.remove("label")
 
@@ -229,8 +197,6 @@ def check_all_same_values(data_frame):
     return False
 
 
-# make two new matrices containing the rows where
-# the input column's value would be above/under threshold
 def split(data_frame, column_name, threshold):
     above = data_frame.loc[(data_frame[column_name] > threshold)]
     below = data_frame.loc[(data_frame[column_name] <= threshold)]
@@ -247,20 +213,17 @@ def learn(X, y, impurity_measure="entropy"):
     # all data points have identical feature values
     elif check_all_same_values(X):
         most_common_label = X.label.mode().get(0)  # most common label
-
         # return leaf with most common label
         tree = Node("Leaf", most_common_label, None)
         tree.leaf = True
         return tree
 
     else:
-
         if impurity_measure == "gini":
             column_name, column_threshold = find_best_column_to_split_gini(X)
         else:
             column_name, column_threshold = find_best_column_to_split_entropy(X)
 
-        # make node for the column we are splitting on
         tree = Node(column_name, None, column_threshold)
 
         # split data frame
@@ -268,35 +231,40 @@ def learn(X, y, impurity_measure="entropy"):
 
         tree.left = learn(above, y, impurity_measure)
         tree.right = learn(below, y, impurity_measure)
-        tree.children = [tree.left, tree.right]
-
         return tree
 
 
-def predict(x, tree: Node):
+def predict(x, tree):
     while not tree.leaf:
         column_index = all_attributes.index(tree.column_name)
-        if x[column_index] < tree.threshold:
+        if x[column_index] <= tree.threshold:
             tree = tree.left
         else:
             tree = tree.right
     return tree.label
 
 
-# return a string of the tree that can be printed
-def print_tree(tree: Node, level=0, condition=None):
-    ret = "\t" * level + str(tree.column_name) + " (" + str(tree.threshold) + ")" + "label: " + str(tree.label) + " "
-    if condition:
-        ret += str(condition)
-    ret += "\n"
-
-    conditions = ["smaller", "greater"]
-    if tree.left != tree:
-        ret += print_tree(tree.left, level=level + 1, condition=conditions[0])
-    if tree.right != tree:
-        ret += print_tree(tree.right, level=level + 1, condition=conditions[1])
-
-    return ret
-
-
 main()
+
+
+def div(X, y, column_name):
+    # TODO another way to get a column
+    #  my_column = X[[columnName]]
+
+    column = X.get(column_name)
+    column_mean = column.mean(axis=0)  # threshold for column
+
+    above_real = X.loc[(X[column_name] > column_mean) & (X['label'] == 1)]
+    above_fake = X.loc[(X[column_name] > column_mean) & (X['label'] == 0)]
+    below_real = X.loc[(X[column_name] <= column_mean) & (X['label'] == 1)]
+    below_fake = X.loc[(X[column_name] <= column_mean) & (X['label'] == 0)]
+
+    # find Entropy for labels
+    len_label = len(X.label)
+    count_distribution_of_labels = X.label.value_counts()
+
+    probabilities = [count / len_label for count in count_distribution_of_labels]
+    column_entropy = 0
+    for probability in probabilities:
+        column_entropy = column_entropy + probability * log2(probability)
+    print(-column_entropy)
