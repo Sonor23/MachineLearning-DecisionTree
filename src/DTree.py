@@ -24,45 +24,11 @@ def main():
     X = X_train
     # List of labels corresponding to X
     y = Y_train
-    impurity_measure = 'entropy'
+    impurity_measure = 'gini'
 
     tree = learn(X, y, impurity_measure)
-
-    print("____LABEL____Should be 1")
-    real1 = [-3.1158, -8.6289, 10.4403, 0.97153]
-    real2 = [-2.0891, -0.48422, 1.704, 1.7435]
-    real3 = [-1.6936, 2.7852, -2.1835, -1.9276]
-    real4 = [-1.2846, 3.2715, -1.7671, -3.2608]
-    real5 = [-0.092194, 0.39315, -0.32846, -0.13794]
-    real6 = [-1.0292, -6.3879, 5.5255, 0.79955]
-    real7 = [-2.2083, -9.1069, 8.9991, -0.28406]
-    real8 = [-1.0744, -6.3113, 5.355, 0.80472]
-    real = [real1, real2, real3, real4, real5, real6, real7, real8]
-    for row in real:
-        predicted_label = predict(row, tree)
-        print(predicted_label)
-
-    print("____LABEL____Should be 0")
-    a = [3.82, 10.9279, -4.0112, -5.0284]
-    b = [-2.7419, 11.4038, 2.5394, -5.5793]
-    c = [3.3669, -5.1856, 3.6935, -1.1427]
-    d = [4.5597, -2.4211, 2.6413, 1.6168]
-    e = [5.1129, -0.49871, 0.62863, 1.1189]
-    abc = [a, b, c, d, e]
-    for row in abc:
-        predicted_label = predict(row, tree)
-        print(predicted_label)
-
-    possible_row_false_1 = [3.62160, 8.6661, -2.8073, -0.44699]
-    possible_row_real_1 = [-0.092194, 0.39315, -0.32846, -0.13794]
-
-    predicted_label_1 = predict(possible_row_false_1, tree)
-    predicted_label_2 = predict(possible_row_real_1, tree)
-    print("____LABEL other____")
-    print(predicted_label_1)
-    print(predicted_label_2)
-
-    # print(print_tree(tree))
+    acc = accuracy(X_test, tree)
+    print(acc)
 
 
 def load_data():
@@ -107,6 +73,7 @@ def calc_entropy(data_frame):
 def calc_gini(data_frame):
     len_y = len(data_frame)
     count_distribution_of_labels = data_frame.label.value_counts()
+
     probabilities = [count / len_y for count in count_distribution_of_labels]
 
     gini_sum = 0
@@ -178,7 +145,6 @@ def find_best_column_to_split_entropy(data_frame):
     return column_name_min_value, column_means[column_name_min_value]
 
 
-# check if all labels are the same
 def check_all_same_label(data_frame):
     count_distribution_of_labels = data_frame.label.value_counts()
     if len(count_distribution_of_labels) == 1:
@@ -226,7 +192,6 @@ def learn(X, y, impurity_measure="entropy"):
 
         tree = Node(column_name, None, column_threshold)
 
-        # split data frame
         above, below = split(X, column_name, column_threshold)
 
         tree.left = learn(above, y, impurity_measure)
@@ -237,11 +202,22 @@ def learn(X, y, impurity_measure="entropy"):
 def predict(x, tree):
     while not tree.leaf:
         column_index = all_attributes.index(tree.column_name)
-        if x[column_index] <= tree.threshold:
+        if x[column_index] > tree.threshold:
             tree = tree.left
         else:
             tree = tree.right
     return tree.label
+
+
+def accuracy(test_data, tree):
+    correct = 0
+    length = len(test_data)
+    test_label = test_data.pop("label")
+    for index, row in test_data.iterrows():
+        prediction = predict(list(row), tree)
+        if prediction == test_label[index]:
+            correct = correct + 1
+    return correct / length
 
 
 main()
