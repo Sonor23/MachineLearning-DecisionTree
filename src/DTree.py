@@ -16,7 +16,7 @@ class Node:
         self.threshold = threshold
         self.is_leaf = self.label is not None
 
-    def prune(self, prune_data, tree):
+    def prune(self, prune_data, tree):  # Prunes the tree
         if not self.is_leaf:
             if self.left is not None:
                 self.left.prune(prune_data, tree)
@@ -42,13 +42,15 @@ class Node:
             self.is_leaf = False
 
 
-def majority_count(tree):  # majority label in T
+# majority label in T
+def majority_count(tree):
     if sum_of_labels(tree) < (count_leaves(tree) / 2):
         return 0
     return 1
 
 
-def count_leaves(tree):  # counts leaves in T
+# Counts leaves in T
+def count_leaves(tree):
     if tree is None:
         return 0
     if tree.left is None and tree.right is None:  # basically leaf
@@ -57,6 +59,7 @@ def count_leaves(tree):  # counts leaves in T
         return count_leaves(tree.left) + count_leaves(tree.right)
 
 
+# Sums opp the labels, used to later determine if 0 or 1 is majority label
 def sum_of_labels(tree):
     if tree is None:
         return 0
@@ -66,12 +69,14 @@ def sum_of_labels(tree):
         return sum_of_labels(tree.left) + sum_of_labels(tree.right)
 
 
+# Loads in the data
 def load_data():
     data = pd.read_csv('data_banknote_authentication.txt', header=None)
     data.columns = all_column_names
     return data
 
 
+# Splits the data into training and testing data
 def create_training_and_test_df(data, train_percentage=0.7, random_state_nr=0):
     data_copy = data.copy()
     x_train = data_copy.sample(frac=train_percentage, random_state=random_state_nr)
@@ -81,6 +86,7 @@ def create_training_and_test_df(data, train_percentage=0.7, random_state_nr=0):
     return x_train, x_test, y_train, y_test
 
 
+# Calculates the entropy
 def calc_entropy(data_frame):
     len_y = len(data_frame)
     count_distribution_of_labels = data_frame.label.value_counts()
@@ -92,6 +98,7 @@ def calc_entropy(data_frame):
     return -entropy
 
 
+# Calculates the gini
 def calc_gini(data_frame):
     len_y = len(data_frame)
     count_distribution_of_labels = data_frame.label.value_counts()
@@ -104,6 +111,7 @@ def calc_gini(data_frame):
     return 1 - gini_sum
 
 
+# Decides which column (attribute) is the best to split on based on calculated impurity
 def find_best_column_to_split_on(data_frame, impurity_measure="entropy"):
     column_names = list(data_frame.columns.values)
 
@@ -139,6 +147,7 @@ def find_best_column_to_split_on(data_frame, impurity_measure="entropy"):
     return column_name_min_value, column_means[column_name_min_value]
 
 
+# Checks if all data points have the same label
 def check_all_same_label(data_frame):
     count_distribution_of_labels = data_frame.label.value_counts()
     if len(count_distribution_of_labels) == 1:
@@ -146,6 +155,7 @@ def check_all_same_label(data_frame):
     return False
 
 
+# Checks if if all data points have identical feature values
 def check_all_same_values(data_frame):
     column_names = list(data_frame.columns.values)
     if "label" in column_names:
@@ -157,12 +167,14 @@ def check_all_same_values(data_frame):
     return False
 
 
+# Based on a threshold the data is separated into two new df above and below the threshold
 def split(data_frame, column_name, threshold):
     above = data_frame.loc[(data_frame[column_name] > threshold)]
     below = data_frame.loc[(data_frame[column_name] <= threshold)]
     return above, below
 
 
+# Makes the tree
 def make_tree(X, y, impurity_measure="entropy"):
     # all data points have the same label
     if check_all_same_label(X):
@@ -191,6 +203,9 @@ def make_tree(X, y, impurity_measure="entropy"):
         return tree
 
 
+# Calls make_tree to make a tree, but method is need to do post-pruning
+# OBS: we preserved the original signature of learn,
+# however we did not utilize y since we worked on a data frame and so no use in splitting the data
 def learn(X, y, impurity_measure="entropy", prune=False):
     if prune:
         x_pruning_data = X.sample(frac=0.15, random_state=0)
@@ -203,6 +218,8 @@ def learn(X, y, impurity_measure="entropy", prune=False):
     return tree
 
 
+# x is format ["variance", "skewness", "curtosis ", "entropy"] Eks: [3.2032,5.7588,-0.75345,-0.61251]
+# uses a tree to predict what x is
 def predict(x, tree: Node):
     while not tree.is_leaf:
         column_index = all_attributes.index(tree.column_name)
@@ -213,6 +230,7 @@ def predict(x, tree: Node):
     return tree.label
 
 
+# Calculates the accuracy of a decision tree
 def accuracy(test_data, tree: Node):
     test_copy = test_data.copy()
     correct = 0
@@ -225,6 +243,8 @@ def accuracy(test_data, tree: Node):
     return correct / length
 
 
+# Constructs tree and prints out data about how the accuracy is and which method does it the best
+# also returns the best method(s)
 def make_trees_and_get_accuracy(X, y, x_test, y_test):
     # Make entropy tree
     tree_entropy = learn(X.copy(), y)
@@ -254,9 +274,9 @@ def make_trees_and_get_accuracy(X, y, x_test, y_test):
     print("For Entropy:  ", accuracy_entropy_with_pruning)
     print("For Gini:     ", accuracy_gini_with_pruning)
 
-    # sklearn decision tree is used for comparison:
-    X.pop("label")
-    x_test.pop("label")
+    # Sklearn decision tree is used for comparison:
+    X.pop("label") # removes the y / label column from X
+    x_test.pop("label") # removes the y / label column from X_test
     sklearn = DecisionTreeClassifier()
     sklearn = sklearn.fit(X, y)
 
@@ -271,18 +291,20 @@ def make_trees_and_get_accuracy(X, y, x_test, y_test):
                       "Gini with pruning ": accuracy_gini_with_pruning,
                       "Sklearn ": accuracy_sklearn}
 
-    # Might be multiple
+    # Might be multiple...
     highest_accuracy = max(all_accuracies.items(), key=lambda x: x[1])
     keys_with_highest_accuracy = list()
     for key, value in all_accuracies.items():
         if value == highest_accuracy[1]:
             keys_with_highest_accuracy.append(key)
+
     print("Best accuracy this round: ")
     [print("      " + key) for key in keys_with_highest_accuracy]
 
     return keys_with_highest_accuracy
 
 
+# Used to run the program
 def main():
     print("STARTING")
     # Load data
