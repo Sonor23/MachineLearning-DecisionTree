@@ -225,7 +225,7 @@ def accuracy(test_data, tree: Node):
     return correct / length
 
 
-def make_trees_and_print_accuracy(X, y, x_test, y_test):
+def make_trees_and_get_accuracy(X, y, x_test, y_test):
     # Make entropy tree
     tree_entropy = learn(X.copy(), y)
     # Get accuracy for entropy tree
@@ -259,7 +259,7 @@ def make_trees_and_print_accuracy(X, y, x_test, y_test):
                       "Entropy with pruning ": accuracy_entropy_with_pruning,
                       "Gini with pruning ": accuracy_gini_with_pruning}
 
-    best_accuracy = min(all_accuracies, key=all_accuracies.get)
+    best_accuracy = max(all_accuracies, key=all_accuracies.get)
     print("Best accuracy this round: " + best_accuracy)
 
     # sklearn decision tree is used for comparison:
@@ -271,18 +271,30 @@ def make_trees_and_print_accuracy(X, y, x_test, y_test):
 
     print("Accuracy for sklearn decision tree: ", accuracy_sklearn)
 
+    return best_accuracy
+
 
 def main():
     print("STARTING")
     # Load data
     data = load_data()
 
-    for nr in range(5):
-        print("------------------- ROUND " + str(nr + 1) + " of 5 ------------------- ")
+    count_best_accuracy = {"Entropy without pruning ": 0,
+                           "Gini without pruning ": 0,
+                           "Entropy with pruning ": 0,
+                           "Gini with pruning ": 0}
+
+    for nr in range(10):
+        print("------------------- ROUND " + str(nr + 1) + " of 10 ------------------- ")
         # Create training and test data
         X_train, X_test, Y_train, Y_test = create_training_and_test_df(data, random_state_nr=nr)
-        make_trees_and_print_accuracy(X_train, Y_train, X_test, Y_test)
+        best_accuracy = make_trees_and_get_accuracy(X_train, Y_train, X_test, Y_test)
+        count_best_accuracy[best_accuracy] = count_best_accuracy.get(best_accuracy, 0) + 1
 
+    print("----------------------- Overview of all rounds ----------------------")
+    [print(key, value) for key, value in count_best_accuracy.items()]
+    method_with_best_accuracy = max(count_best_accuracy, key=count_best_accuracy.get)
+    print(method_with_best_accuracy + " has the overall highest accuracy")
     print("COMPLETED")
 
 
