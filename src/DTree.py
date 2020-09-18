@@ -80,23 +80,29 @@ def main():
     X_prune = X.sample(frac=0.15, random_state=0)
     X = X.drop(X_prune.index)
 
-    tree = learn(X, y, impurity_measure)
-    print("not pruned")
-    print(count_leaves(tree))
-    print(sum_of_labels(tree))
+    tree_gini = learn(X.copy(), y, "gini")
+    tree_entropy = learn(X.copy(), y)
 
-    acc = accuracy(X_test.copy(), tree)
-    print(acc)
+    acc_gini = accuracy(X_test.copy(), tree_gini)
+    acc_entropy = accuracy(X_test.copy(), tree_entropy)
 
-    tree.prune(X_prune, tree)
+    print("Accuracy before pruning")
+    print("--Gini")
+    print(acc_gini)
+    print("--Entropy")
+    print(acc_entropy)
 
-    new_acc = accuracy(X_test.copy(), tree)
+    tree_gini.prune(X_prune, tree_gini)
+    tree_entropy.prune(X_prune, tree_entropy)
 
-    print("pruned tree")
-    print(count_leaves(tree))
-    print(sum_of_labels(tree))
+    new_acc_gini = accuracy(X_test.copy(), tree_gini)
+    new_acc_entropy = accuracy(X_test.copy(), tree_entropy)
 
-    print(new_acc)
+    print("Accuracy after pruning")
+    print("--Gini")
+    print(new_acc_gini)
+    print("--Entropy")
+    print(new_acc_entropy)
 
 
 def load_data():
@@ -150,13 +156,13 @@ def calc_gini(data_frame):
     return 1 - gini_sum
 
 
-def find_best_column_to_split_gini(data_frame):
+def find_best_column_to_split_on(data_frame, impurity_measure="entropy"):
     column_names = list(data_frame.columns.values)
 
     if "label" in column_names:
         column_names.remove("label")
 
-    column_ginies = {}
+    column_impurity = {}
     column_means = {}
 
     for column_name in column_names:
@@ -169,47 +175,19 @@ def find_best_column_to_split_gini(data_frame):
         probability_above = len(above) / (len(above) + len(below))
         probability_below = len(below) / (len(above) + len(below))
 
-        gini_above = calc_gini(above)
-        gini_below = calc_gini(below)
+        if impurity_measure == "gini":
+            impurity_above = calc_gini(above)
+            impurity_below = calc_gini(below)
+        else:
+            impurity_above = calc_entropy(above)
+            impurity_below = calc_entropy(below)
 
-        gini_for_column = probability_below * gini_below + probability_above * gini_above
+        impurity_column = probability_below * impurity_below + probability_above * impurity_above
 
-        column_ginies[column_name] = gini_for_column
+        column_impurity[column_name] = impurity_column
         column_means[column_name] = column_mean
 
-    column_name_min_value = min(column_ginies, key=column_ginies.get)
-    return column_name_min_value, column_means[column_name_min_value]
-
-
-def find_best_column_to_split_entropy(data_frame):
-    column_names = list(data_frame.columns.values)
-
-    if "label" in column_names:
-        column_names.remove("label")
-
-    column_entropies = {}
-    column_means = {}
-
-    for column_name in column_names:
-        column = data_frame.get(column_name)
-        column_mean = column.mean(axis=0)  # threshold for column
-
-        above = data_frame.loc[(data_frame[column_name] > column_mean)]
-        below = data_frame.loc[(data_frame[column_name] <= column_mean)]
-
-        probability_above = len(above) / (len(above) + len(below))
-        probability_below = len(below) / (len(above) + len(below))
-
-        entropy_above = calc_entropy(above)
-        entropy_below = calc_entropy(below)
-
-        entropy_for_column = probability_below * entropy_below + probability_above * entropy_above
-
-        column_entropies[column_name] = entropy_for_column
-        column_means[column_name] = column_mean
-
-    column_name_min_value = min(column_entropies, key=column_entropies.get)
-
+    column_name_min_value = min(column_impurity, key=column_impurity.get)
     return column_name_min_value, column_means[column_name_min_value]
 
 
@@ -252,9 +230,9 @@ def learn(X, y, impurity_measure="entropy"):
 
     else:
         if impurity_measure == "gini":
-            column_name, column_threshold = find_best_column_to_split_gini(X)
+            column_name, column_threshold = find_best_column_to_split_on(X, impurity_measure)
         else:
-            column_name, column_threshold = find_best_column_to_split_entropy(X)
+            column_name, column_threshold = find_best_column_to_split_on(X, impurity_measure)
 
         tree = Node(column_name, None, column_threshold)
 
