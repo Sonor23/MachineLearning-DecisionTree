@@ -1,12 +1,16 @@
 import pandas as pd
 from math import log2
+
+##############################################
+# For comparison
 from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
+##############################################
 
 all_column_names = ["variance", "skewness", "curtosis ", "entropy", "label"]
 all_attributes = ["variance", "skewness", "curtosis ", "entropy"]
 
-
+# Node class for building the decision tree
 class Node:
     def __init__(self, column_name, label, threshold):
         self.left = None
@@ -16,7 +20,8 @@ class Node:
         self.threshold = threshold
         self.is_leaf = self.label is not None
 
-    def prune(self, prune_data, tree):  # Prunes the tree
+    # Prunes the tree
+    def prune(self, prune_data, tree):
         if not self.is_leaf:
             if self.left is not None:
                 self.left.prune(prune_data, tree)
@@ -210,6 +215,7 @@ def learn(X, y, impurity_measure="entropy", prune=False):
     if prune:
         x_pruning_data = X.sample(frac=0.15, random_state=0)
         X = X.drop(x_pruning_data.index)
+
     tree = make_tree(X, y, impurity_measure)
 
     if prune:
@@ -328,7 +334,7 @@ def main():
     print("----------------------- Overview of all rounds ----------------------")
     [print(key, value) for key, value in count_best_accuracy.items()]
     method_with_best_accuracy = max(count_best_accuracy, key=count_best_accuracy.get)
-    print(method_with_best_accuracy + " has the overall highest accuracy")
+    print(method_with_best_accuracy + "has the overall highest accuracy")
     print("COMPLETED")
 
 
