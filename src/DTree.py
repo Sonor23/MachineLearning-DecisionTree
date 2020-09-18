@@ -1,11 +1,11 @@
 import pandas as pd
 from math import log2
 
-##############################################
+###############################################
 # For comparison
 from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
-##############################################
+###############################################
 
 all_column_names = ["variance", "skewness", "curtosis ", "entropy", "label"]
 all_attributes = ["variance", "skewness", "curtosis ", "entropy"]
