@@ -254,11 +254,22 @@ def make_trees_and_get_accuracy(X, y, x_test, y_test):
     print("For Entropy:  ", accuracy_entropy_with_pruning)
     print("For Gini:     ", accuracy_gini_with_pruning)
 
+    # sklearn decision tree is used for comparison:
+    X.pop("label")
+    x_test.pop("label")
+    sklearn = DecisionTreeClassifier()
+    sklearn = sklearn.fit(X, y)
+
+    prediction = sklearn.predict(x_test)
+    accuracy_sklearn = accuracy_score(y_test, prediction)
+    print("Sklearn")
+    print("For Sklearn:  ", accuracy_sklearn)
+
     all_accuracies = {"Entropy without pruning ": accuracy_entropy,
                       "Gini without pruning ": accuracy_gini,
                       "Entropy with pruning ": accuracy_entropy_with_pruning,
-                      "Gini with pruning ": accuracy_gini_with_pruning}
-
+                      "Gini with pruning ": accuracy_gini_with_pruning,
+                      "Sklearn ": accuracy_sklearn}
 
     # Might be multiple
     highest_accuracy = max(all_accuracies.items(), key=lambda x: x[1])
@@ -268,15 +279,6 @@ def make_trees_and_get_accuracy(X, y, x_test, y_test):
             keys_with_highest_accuracy.append(key)
     print("Best accuracy this round: ")
     [print("      " + key) for key in keys_with_highest_accuracy]
-
-    # sklearn decision tree is used for comparison:
-    sklearn = DecisionTreeClassifier()
-    sklearn = sklearn.fit(X, y)
-
-    prediction = sklearn.predict(x_test)
-    accuracy_sklearn = accuracy_score(y_test, prediction)
-
-    print("Accuracy for sklearn decision tree: ", accuracy_sklearn)
 
     return keys_with_highest_accuracy
 
@@ -289,7 +291,8 @@ def main():
     count_best_accuracy = {"Entropy without pruning ": 0,
                            "Gini without pruning ": 0,
                            "Entropy with pruning ": 0,
-                           "Gini with pruning ": 0}
+                           "Gini with pruning ": 0,
+                           "Sklearn ": 0}
 
     for nr in range(10):
         print("------------------- ROUND " + str(nr + 1) + " of 10 ------------------- ")
