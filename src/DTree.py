@@ -229,12 +229,12 @@ def make_trees_and_get_accuracy(X, y, x_test, y_test):
     # Make entropy tree
     tree_entropy = learn(X.copy(), y)
     # Get accuracy for entropy tree
-    accuracy_entropy = accuracy(x_test.copy(), tree_entropy)
+    accuracy_entropy = accuracy(x_test, tree_entropy)
 
     # Make gini tree
     tree_gini = learn(X.copy(), y, "gini")
     # Get accuracy for gini tree
-    accuracy_gini = accuracy(x_test.copy(), tree_gini)
+    accuracy_gini = accuracy(x_test, tree_gini)
 
     print("Accuracy before pruning")
     print("For Entropy:  ", accuracy_entropy)
@@ -246,9 +246,9 @@ def make_trees_and_get_accuracy(X, y, x_test, y_test):
     tree_gini_prune = learn(X.copy(), y, impurity_measure="gini", prune=True)
 
     # Get accuracy for gini tree with pruning
-    accuracy_gini_with_pruning = accuracy(x_test.copy(), tree_gini_prune)
+    accuracy_gini_with_pruning = accuracy(x_test, tree_gini_prune)
     # Get accuracy for entropy tree with pruning
-    accuracy_entropy_with_pruning = accuracy(x_test.copy(), tree_entropy_prune)
+    accuracy_entropy_with_pruning = accuracy(x_test, tree_entropy_prune)
 
     print("Accuracy after pruning")
     print("For Entropy:  ", accuracy_entropy_with_pruning)
@@ -259,8 +259,15 @@ def make_trees_and_get_accuracy(X, y, x_test, y_test):
                       "Entropy with pruning ": accuracy_entropy_with_pruning,
                       "Gini with pruning ": accuracy_gini_with_pruning}
 
-    best_accuracy = max(all_accuracies, key=all_accuracies.get)
-    print("Best accuracy this round: " + best_accuracy)
+
+    # Might be multiple
+    highest_accuracy = max(all_accuracies.items(), key=lambda x: x[1])
+    keys_with_highest_accuracy = list()
+    for key, value in all_accuracies.items():
+        if value == highest_accuracy[1]:
+            keys_with_highest_accuracy.append(key)
+    print("Best accuracy this round: ")
+    [print("      " + key) for key in keys_with_highest_accuracy]
 
     # sklearn decision tree is used for comparison:
     sklearn = DecisionTreeClassifier()
@@ -271,7 +278,7 @@ def make_trees_and_get_accuracy(X, y, x_test, y_test):
 
     print("Accuracy for sklearn decision tree: ", accuracy_sklearn)
 
-    return best_accuracy
+    return keys_with_highest_accuracy
 
 
 def main():
@@ -288,8 +295,10 @@ def main():
         print("------------------- ROUND " + str(nr + 1) + " of 10 ------------------- ")
         # Create training and test data
         X_train, X_test, Y_train, Y_test = create_training_and_test_df(data, random_state_nr=nr)
+
         best_accuracy = make_trees_and_get_accuracy(X_train, Y_train, X_test, Y_test)
-        count_best_accuracy[best_accuracy] = count_best_accuracy.get(best_accuracy, 0) + 1
+        for key in best_accuracy:
+            count_best_accuracy[key] = count_best_accuracy.get(key, 0) + 1
 
     print("----------------------- Overview of all rounds ----------------------")
     [print(key, value) for key, value in count_best_accuracy.items()]
