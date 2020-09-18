@@ -7,8 +7,8 @@ all_attributes = ["variance", "skewness", "curtosis ", "entropy"]
 
 class Node:
     def __init__(self, column_name, label, threshold):
-        self.left = self
-        self.right = self
+        self.left = None
+        self.right = None
         self.column_name = column_name
         self.label = label
         self.threshold = threshold
@@ -26,8 +26,7 @@ class Node:
         accuracy_before_pruning = accuracy(prune_data, tree)
         right_branch = self.right
         left_branch = self.left
-
-        self.label = prune_data.label.mode().get(0)
+        self.label = majority_count(tree)
         self.right = None
         self.left = None
         self.is_leaf = True
@@ -41,6 +40,30 @@ class Node:
             self.is_leaf = False
 
 
+def majority_count(tree):
+    num_of_leaves = count_leaves(tree)
+    sum_labels_in_leaves = sum_of_labels(tree)
+    if sum_labels_in_leaves < (num_of_leaves / 2):
+        return 0
+    return 1
+
+
+def count_leaves(tree):
+    if tree is None:
+        return 0
+    if tree.left is None and tree.right is None:  # basically leaf
+        return 1
+    else:
+        return count_leaves(tree.left) + count_leaves(tree.right)
+
+
+def sum_of_labels(tree):
+    if tree is None:
+        return 0
+    if tree.left is None and tree.right is None:  # basicly leaf
+        return tree.label
+    else:
+        return sum_of_labels(tree.left) + sum_of_labels(tree.right)
 
 
 def main():
@@ -58,6 +81,9 @@ def main():
     X = X.drop(X_prune.index)
 
     tree = learn(X, y, impurity_measure)
+    print("not pruned")
+    print(count_leaves(tree))
+    print(sum_of_labels(tree))
 
     acc = accuracy(X_test.copy(), tree)
     print(acc)
@@ -65,6 +91,10 @@ def main():
     tree.prune(X_prune, tree)
 
     new_acc = accuracy(X_test.copy(), tree)
+
+    print("pruned tree")
+    print(count_leaves(tree))
+    print(sum_of_labels(tree))
 
     print(new_acc)
 
