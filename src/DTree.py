@@ -1,5 +1,7 @@
 import pandas as pd
 from math import log2
+from sklearn.metrics import accuracy_score
+from sklearn.tree import DecisionTreeClassifier
 
 all_column_names = ["variance", "skewness", "curtosis ", "entropy", "label"]
 all_attributes = ["variance", "skewness", "curtosis ", "entropy"]
@@ -58,29 +60,21 @@ def count_leaves(tree):  # counts leaves in T
 def sum_of_labels(tree):
     if tree is None:
         return 0
-    if tree.left is None and tree.right is None:  # basicly leaf
+    if tree.left is None and tree.right is None:  # basically leaf
         return tree.label
     else:
         return sum_of_labels(tree.left) + sum_of_labels(tree.right)
 
 
 def load_data():
-    print("Load Data")
     data = pd.read_csv('data_banknote_authentication.txt', header=None)
     data.columns = all_column_names
-
-    # Print shape of loaded data
-    print("Dataset Length: ", len(data))
-    print("Dataset Shape: ", data.shape)
-
-    # Print head of loaded data
-    print("Head of Dataset: ", data.head())
     return data
 
 
-def create_training_and_test_df(data, train_percentage=0.7):
+def create_training_and_test_df(data, train_percentage=0.7, random_state_nr=0):
     data_copy = data.copy()
-    x_train = data_copy.sample(frac=train_percentage, random_state=0)
+    x_train = data_copy.sample(frac=train_percentage, random_state=random_state_nr)
     x_test = data_copy.drop(x_train.index)
     y_train = x_train.get('label')
     y_test = x_test.get('label')
@@ -231,38 +225,65 @@ def accuracy(test_data, tree: Node):
     return correct / length
 
 
-def main():
-    data = load_data()
-    X_train, X_test, Y_train, Y_test = create_training_and_test_df(data)
-
-    # Matrix - Part of Data without labels
-    X = X_train
-    # List of labels corresponding to X
-    y = Y_train
-
-    tree_gini = learn(X.copy(), y, "gini")
+def make_trees_and_print_accuracy(X, y, x_test, y_test):
+    # Make entropy tree
     tree_entropy = learn(X.copy(), y)
+    # Get accuracy for entropy tree
+    accuracy_entropy = accuracy(x_test.copy(), tree_entropy)
 
-    acc_gini = accuracy(X_test.copy(), tree_gini)
-    acc_entropy = accuracy(X_test.copy(), tree_entropy)
+    # Make gini tree
+    tree_gini = learn(X.copy(), y, "gini")
+    # Get accuracy for gini tree
+    accuracy_gini = accuracy(x_test.copy(), tree_gini)
 
     print("Accuracy before pruning")
-    print("--Gini")
-    print(acc_gini)
-    print("--Entropy")
-    print(acc_entropy)
+    print("For Entropy:  ", accuracy_entropy)
+    print("For Gini:     ", accuracy_gini)
 
-    tree_gini_prune = tree_gini = learn(X.copy(), y, impurity_measure="gini", prune=True)
-    tree_entropy_prune = tree_entropy = learn(X.copy(), y, prune=True)
+    # Make entropy tree with pruning
+    tree_entropy_prune = learn(X.copy(), y, prune=True)
+    # Make gini tree with pruning
+    tree_gini_prune = learn(X.copy(), y, impurity_measure="gini", prune=True)
 
-    new_acc_gini = accuracy(X_test.copy(), tree_gini_prune)
-    new_acc_entropy = accuracy(X_test.copy(), tree_entropy_prune)
+    # Get accuracy for gini tree with pruning
+    accuracy_gini_with_pruning = accuracy(x_test.copy(), tree_gini_prune)
+    # Get accuracy for entropy tree with pruning
+    accuracy_entropy_with_pruning = accuracy(x_test.copy(), tree_entropy_prune)
 
     print("Accuracy after pruning")
-    print("--Gini")
-    print(new_acc_gini)
-    print("--Entropy")
-    print(new_acc_entropy)
+    print("For Entropy:  ", accuracy_entropy_with_pruning)
+    print("For Gini:     ", accuracy_gini_with_pruning)
+
+    all_accuracies = {"Entropy without pruning ": accuracy_entropy,
+                      "Gini without pruning ": accuracy_gini,
+                      "Entropy with pruning ": accuracy_entropy_with_pruning,
+                      "Gini with pruning ": accuracy_gini_with_pruning}
+
+    best_accuracy = min(all_accuracies, key=all_accuracies.get)
+    print("Best accuracy this round: " + best_accuracy)
+
+    # sklearn decision tree is used for comparison:
+    sklearn = DecisionTreeClassifier()
+    sklearn = sklearn.fit(X, y)
+
+    prediction = sklearn.predict(x_test)
+    accuracy_sklearn = accuracy_score(y_test, prediction)
+
+    print("Accuracy for sklearn decision tree: ", accuracy_sklearn)
+
+
+def main():
+    print("STARTING")
+    # Load data
+    data = load_data()
+
+    for nr in range(5):
+        print("------------------- ROUND " + str(nr + 1) + " of 5 ------------------- ")
+        # Create training and test data
+        X_train, X_test, Y_train, Y_test = create_training_and_test_df(data, random_state_nr=nr)
+        make_trees_and_print_accuracy(X_train, Y_train, X_test, Y_test)
+
+    print("COMPLETED")
 
 
 main()
